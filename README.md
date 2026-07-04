@@ -10,7 +10,37 @@ walkthrough of what the platform does and how to use it, no code involved. See
 [ROADMAP.md](ROADMAP.md) for the full build history and [docs/](docs/) for the original
 architecture, database schema, API spec, UI wireframes, and agent-interaction design docs.
 
+## 📸 Screenshots & Key Features
+
+### 1. Market Intelligence Dashboard
+Get a high-level overview of global market indices (Fear & Greed Index, VIX, Oil, Gold, BTC), sector trends (Technology, Financials, Energy, Healthcare), top gainers/losers, and scheduled macro calendar events.
+![Market Intelligence Dashboard](docs/images/markets.png)
+
+### 2. AI Opportunities & Recommendation Screener
+Discover high-confidence AI opportunities and screen equities using multi-agent consensus scoring (assessing news, technicals, fundamentals, momentum, risk, and macro factors).
+![Recommendation Screener & AI Opportunities](docs/images/research.png)
+
+### 3. Deep Equities Analysis & Interactive Charts
+Analyze individual tickers with interactive candlestick charts, automated technical levels (support/resistance, RSI), and transparent AI scoring breakdowns with a confidence cap and detailed "why" explanation.
+![Equities Analysis Page](docs/images/company_details.png)
+
+---
+
+## 🤖 Background Agent Architecture
+
+The platform runs a series of specialized background agents (orchestrated via Celery + Redis) to collect data, analyze it, and reason about market opportunities:
+
+- **Data Collection Agent**: Fetches prices, financials, and news articles periodically.
+- **Technical Analysis Agent**: Generates technical levels (support, resistance), detects trends, and calculates indicators like RSI and MACD.
+- **Fundamental Analysis Agent**: Evaluates company financial stability, growth, valuation ratios, and balance sheet health.
+- **News Intelligence Agent**: Computes sentiment, relevance, and importance of incoming news articles.
+- **AI Recommendation Agent**: Synthesizes all gathered metrics and reasoning into structured recommendations (entry/exit zones, stop loss, score, confidence, pros/cons).
+- **Learning Agent**: Automatically retroactively grades past predictions against real price data to log performance and improve model weights.
+
+---
+
 ## Stack
+
 
 - **Backend**: Python, FastAPI, SQLAlchemy (async) + Alembic, Celery + Redis, PostgreSQL, Qdrant, WebSockets, Pydantic
 - **Frontend**: Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind v4, Recharts, zustand
