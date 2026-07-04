@@ -5,6 +5,17 @@ fundamental analysis, and AI reasoning combined into a master score and a recomm
 that always explains its *why*. This is not a trading bot: it never executes trades, and
 every recommendation ships with an explicit confidence cap and uncertainty note.
 
+> [!WARNING]
+> **BASELINE PROJECT DISCLAIMER:** This platform is a **baseline proof-of-concept project** and is intended for research and educational purposes only. The metrics, sentiment analysis, and stock recommendations provided by the AI agents are **not fully trusted or verified** and should not be used for actual trading or financial decisions.
+
+> [!TIP]
+> **Opportunities for Future Improvement:**
+> To elevate this baseline into a production-grade trading and research engine, the following enhancements and resources are recommended:
+> * **Real-Time / Sub-Second News Streams**: Replace the current polled/cached news setup (4-hour intervals) with high-frequency financial news APIs (e.g., Bloomberg Enterprise, Reuters News API, or Dow Jones Newswires) via WebSocket streams for instantaneous sentiment updates.
+> * **Fine-Tuned Financial LLMs**: Utilize specialized financial sentiment models (e.g., FinBERT) or fine-tune local models (Ollama/Llama) specifically on financial lexicon to increase analysis precision and reduce API costs.
+> * **Order-Book & Depth of Market**: Integrate Level 2 market data feeds (order books, volume profile) to gauge liquidity levels along with basic candlestick trends.
+
+
 New here? Start with [docs/00-user-guide.md](docs/00-user-guide.md) — a plain-language
 walkthrough of what the platform does and how to use it, no code involved. See
 [ROADMAP.md](ROADMAP.md) for the full build history and [docs/](docs/) for the original
