@@ -1,0 +1,44 @@
+# Fly.io app definition — backend API, Celery worker, and Celery beat as three
+# process groups of the same Docker image (backend/Dockerfile), so all three
+# get env vars/secrets from one place. See docs/08-free-deployment-guide.md.
+#
+# Replace `app` below with your actual Fly app name after `fly launch`.
+app = "stocks-new-backend"
+primary_region = "bom"  # Mumbai — closest region to NSE/BSE data + your users
+
+[build]
+
+[processes]
+app = "uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000"
+worker = "celery -A app.infrastructure.tasks.celery_app worker -l info -Q data,analysis,ai,alerts --concurrency=2"
+beat = "celery -A app.infrastructure.tasks.celery_app beat -l info"
+
+[http_service]
+internal_port = 8000
+force_https = true
+auto_stop_machines = false
+auto_start_machines = true
+min_machines_running = 1
+processes = ["app"]
+
+[[http_service.checks]]
+interval = "30s"
+timeout = "5s"
+grace_period = "15s"
+method = "GET"
+path = "/api/v1/health"
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "256mb"
+processes = ["app"]
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "256mb"
+processes = ["worker"]
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "256mb"
+processes = ["beat"]

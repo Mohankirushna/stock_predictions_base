@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Data
+*.sqlite3
+qdrant_storage/
+pgdata/
+celerybeat-schedule*

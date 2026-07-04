@@ -1,0 +1,102 @@
+name: stocks
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB__USER:-stocks}
+      POSTGRES_PASSWORD: ${DB__PASSWORD:-stocks}
+      POSTGRES_DB: ${DB__NAME:-stocks}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB__USER:-stocks}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      DB__HOST: postgres
+      DB__PORT: 5432
+      REDIS__URL: redis://redis:6379/0
+      QDRANT__URL: http://qdrant:6333
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Celery services activate in M9 (they need app.infrastructure.tasks).
+  # Run with: docker compose --profile workers up
+  worker:
+    build: ./backend
+    profiles: ["workers"]
+    env_file: .env
+    environment:
+      DB__HOST: postgres
+      DB__PORT: 5432
+      REDIS__URL: redis://redis:6379/0
+      QDRANT__URL: http://qdrant:6333
+      # host.docker.internal reaches the host machine from inside the
+      # container — needed since Ollama typically runs on the host, not
+      # in a container of its own.
+      AI__OLLAMA_BASE_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: celery -A app.infrastructure.tasks.celery_app worker -l info -Q data,analysis,ai,alerts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  beat:
+    build: ./backend
+    profiles: ["workers"]
+    env_file: .env
+    environment:
+      DB__HOST: postgres
+      DB__PORT: 5432
+      REDIS__URL: redis://redis:6379/0
+    command: celery -A app.infrastructure.tasks.celery_app beat -l info
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    profiles: ["full"]   # activates in M20 (frontend scaffold)
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  qdrant_storage:

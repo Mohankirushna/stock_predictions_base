@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0e14;
+  --panel: #11151f;
+  --panel-hover: #161b26;
+  --border: #1e2530;
+  --foreground: #e6eaf2;
+  --muted: #8b93a7;
+  --bull: #16c784;
+  --bear: #ea3943;
+  --accent: #4c8dff;
+  --accent-hover: #6a9fff;
+  --warning: #f5a623;
+
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-panel: var(--panel);
+  --color-panel-hover: var(--panel-hover);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-bull: var(--bull);
+  --color-bear: var(--bear);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Thin, unobtrusive scrollbars matching the panel theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 8px;
+}

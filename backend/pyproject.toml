@@ -1,0 +1,70 @@
+[project]
+name = "stocks-backend"
+version = "0.1.0"
+description = "AI Investment Research Platform — backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "email-validator>=2.2",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "celery[redis]>=5.4",
+    "redis>=5.0",
+    "qdrant-client>=1.10",
+    "httpx>=0.27",
+    "pyjwt[crypto]>=2.9",
+    "bcrypt>=4.1",
+    "authlib>=1.3",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+# N818: InvariantViolation is the established domain term, not an "...Error"
+ignore = ["N818"]
+
+[tool.ruff.lint.per-file-ignores]
+# B008: FastAPI's Depends()-in-default-arg is the framework's own idiom.
+"app/api/**" = ["B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["app/tests"]
+filterwarnings = [
+    # Test fixtures intentionally use short secrets; production keys are 64+ chars.
+    "ignore:The HMAC key.*below the minimum recommended length:UserWarning",
+    # Harmless GC-timing artifact: a redis-asyncio connection from an earlier
+    # test gets garbage-collected after that test's event loop has closed.
+    # (The traceback spans newlines, so a message regex can't anchor on it —
+    # this project has no other source of "unraisable" exceptions to hide.)
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
