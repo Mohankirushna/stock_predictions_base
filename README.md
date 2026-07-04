@@ -39,7 +39,46 @@ The platform runs a series of specialized background agents (orchestrated via Ce
 
 ---
 
+## ⚙️ Technical Deep Dive & AI Implementation
+
+### 1. Market Data & News Fetching
+The platform abstracts market data operations via a clean `MarketDataSource` port interface, allowing different vendors to cover specific capabilities:
+* **Market Quotes & Financials**: Pulled from either **Finnhub** (primary REST source for US markets) or **Yahoo Finance** (unofficial free source, primarily utilized to fetch real-time quotes and historical data for Indian NSE/BSE equities like `RELIANCE.NS`).
+* **Financial News Aggregation**: Fetched via **Marketaux** (financial news API) or Finnhub. Marketaux is especially key for Indian markets since it maps official tickers to plain search keywords (e.g. searching "Infosys" for `INFY.NS`) and ignores stale articles (restricted to a max age of 30 days).
+* **Cache & Rate-Limit Safeguards**: News queries are throttled through Redis. The `CompositeMarketDataSource` caches news lookups for a configurable period (defaulting to 4 hours) to prevent redundant API queries and respect API quotas on free tiers.
+
+### 2. AI Model Selection & Fallback Routing
+The system is built on a provider-agnostic `AIProvider` adapter architecture. Concrete API adapters exist for:
+* **Cloud LLMs**: Gemini (Google), Claude (Anthropic), OpenAI, DeepSeek, Mistral, and Groq.
+* **Aggregators**: OpenRouter.
+* **Local Run**: Ollama (defaults to `llama3.1`).
+
+You can customize orchestration dynamically in `.env`:
+* **Fallbacks** (`AI__FALLBACK_PROVIDERS`): Defines a chain of backup providers to route requests to if the primary model fails.
+* **Overrides** (`AI__AGENT_OVERRIDES`): Directs specific agents to specialized models (e.g. routing the intensive `research` agent to `claude-3-5-sonnet` while delegating `news_intelligence` to a faster, cost-effective model like `gpt-4o-mini`).
+
+### 3. Sentiment Analysis & Consensus Scoring
+When unanalyzed articles are fetched, they are passed to the **News Intelligence Agent** for structured sentiment processing:
+1. **Factual Prompting**: The agent sends the article title and body to the LLM with a strict prompt:
+   > *You are a financial news analyst. Read the article and extract a structured analysis: sentiment, importance, a concise summary, risks, opportunities... Be factual and conservative — do not speculate.*
+2. **Structured JSON Extraction**: The LLM output is parsed directly into a `NewsAnalysisOutput` schema containing:
+   * `sentiment`: Float value ranging from `-1.0` (very bearish) to `+1.0` (very bullish).
+   * `importance`: Integer ranking from `1` (minor update) to `10` (highly market-moving).
+   * `summary`: One-sentence summary of the event.
+3. **Qdrant Vector Embedding**: The summary is embedded via the active AI provider and saved in Qdrant (`news_embeddings` collection) to enable semantic vector searching of news logs.
+4. **Weighted Sentiment Calculation**: When calculating the general stock news rating (`0` to `100`), the platform uses an importance-weighted average:
+   \[
+   \text{Weighted Sentiment} = \frac{\sum_{i} \left(\text{sentiment}_i \times (\text{importance}_i + 1)\right)}{\sum_{i} (\text{importance}_i + 1)}
+   \]
+   This score is then clamped and linearly scaled:
+   \[
+   \text{News Score} = (\text{Weighted Sentiment} \times 50) + 50
+   \]
+
+---
+
 ## Stack
+
 
 
 - **Backend**: Python, FastAPI, SQLAlchemy (async) + Alembic, Celery + Redis, PostgreSQL, Qdrant, WebSockets, Pydantic
